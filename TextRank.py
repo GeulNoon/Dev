@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[4]:
-
-
 import networkx
 import re
  
@@ -223,10 +220,3 @@ for i in row:
         if j[1] == 'NNG':
             example = example.replace(j[0], '____')
 print(example)
-
-
-# In[ ]:
-
-
-
-

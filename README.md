@@ -1,5 +1,5 @@
 # GeulNoon
-<b>Project of GeulNoon(청소년 문해력 강화 훈련 서비스)</b>
+<b>Project of GeulNoon(청소년 문해력 강화 훈련 웹서비스)</b>
 
 캡스톤디자인프로젝트A 스타트29팀(2021.09.02-2021.12.13)
 

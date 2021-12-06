@@ -6,3 +6,4 @@
 팀원 | 기술검증 |
 ---- | ---- | 
 전다윤<br>[DAYOON0836](https://github.com/DAYOON0836)| 1. <b>Sentence Transformer</b>를 이용한 직접 요약과 KoBART, TextRank 생성 요약문 간의 텍스트 유사도 비교<br>2. <b>Sentence Transformer</b>를 이용한 KoBART 생성 요약문과 사용자 요약문 간의 텍스트 유사도 비교
+---- | ---- | 

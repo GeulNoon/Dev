@@ -4,7 +4,7 @@
 ##### **실행 방법**: anaconda3 설치후 Tensorflow 가상환경 생성, 이후 Jupyter Notebook에서 코드 실행
 ##### **이용 방법**:
 요약 대상 txt 파일의 로컬 경로를  
-> tr.load(RawTaggerReader('C:\\\\Users\\\\UserName\\\\text.txt'), lambda w: w not in stopword and (w[1] in ('NNG', 'NNP', 'VV', 'VA')))   
+> tr.load(RawTaggerReader('C:\\\\Users\\\\UserName\\\\text.txt'), lambda w: w not in stopword and (w[1] in ('NNG', 'NNP', 'VV', 'VA')))  
 코드에 *C:\\\\Users\\\\UserName\\\\text.txt*와 같은 형식으로 입력
 코드 실행시 요약문 출력
 ##### **필요 패키지**: 

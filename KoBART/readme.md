@@ -2,6 +2,10 @@
 학습하기 기능 중 요약하기 유형을 위해 KoBART를 이용하여 문단 속 핵심 문장을 추출하여 요약문을 생성해보았다.
 ##### **실행 방법**: colab에서 문장별로 실행
 fine-tuning 전 모델로 요약할 경우 *!python train.py  --gradient_clip_val 1.0 --max_epochs 3 --default_root_dir logs  --gpus 1 --batch_size 4 --num_workers 2* 실행X
+##### **이용 방법**:
+요약할 문단을 입력하기위해 */content/KoBART-summarization* 폴더 안에 text.txt 파일을 생성, 해당 파일에 요약 문단 입력
+가장 아래에서 두번째 코드 실행시 요약문 출력
+
 ##### **필요 패키지**: 
 파일(KoBART.ipynb) 코드 속
 > !pip install git+https://github.com/SKT-AI/KoBART#egg=kobart

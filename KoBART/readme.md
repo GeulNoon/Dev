@@ -16,5 +16,6 @@ fine-tuning 전 모델로 요약할 경우
 > !pip install -r requirements.txt
 > !pip install torch==1.7.1+cu101 torchvision==0.8.2+cu101 -f https://download.pytorch.org/whl/torch_stable.html
 > !pip install torchtext==0.8.0
+
 을 실행하여 설치
 ###### **블로그 참조**: https://kimalgo.tistory.com/5?category=1052686

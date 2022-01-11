@@ -5,6 +5,7 @@ import Study from "./Study";
 import Review from "./Review";
 import Result from "./Result";
 import Login from "./Login";
+import Register from "./Register";
 
 const Button = styled.button`
   width: 200px;
@@ -58,6 +59,7 @@ class Home extends Component {
             <Route path="/Review" element={<Review/>}/>
             <Route path="/Result" element={<Result/>}/>
             <Route path="/Login" element={<Login/>}/>
+            <Route path="/Register" element={<Register/>}/>
           </Routes>
         </div>
     )

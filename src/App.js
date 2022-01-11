@@ -6,6 +6,7 @@ import Review from "./screens/Review";
 import Result from "./screens/Result";
 import MyPage from "./screens/MyPage";
 import Login from "./screens/Login";
+import Register from "./screens/Register";
 
 class Subject extends Component{
   render(){
@@ -70,6 +71,7 @@ class App extends Component {
             <Route path="/Result" element={<Result/>}/>
             <Route path="/MyPage" element={<MyPage/>}/>
             <Route path="/Login" element={<Login/>}/>
+            <Route path="/Register" element={<Register/>}/>
           </Routes>
         </div>
       </BrowserRouter>

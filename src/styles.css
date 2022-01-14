@@ -1,0 +1,131 @@
+.Login {
+  font-family: sans-serif;
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+  margin: 155px auto;
+}
+
+.Register {
+  font-family: sans-serif;
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+  margin: 155px auto;
+}
+
+.RegisterForm {
+  background-color: rgb(250,251,250);
+  border: 1px solid black;
+  max-width: 900px;
+  width: 100%;
+  padding: 80px 0px 80px 80px; 
+}
+
+.LoginForm {
+  background-color: rgb(250,251,250);
+  border: 1px solid black;
+  max-width: 600px;
+  width: 100%;
+  margin: 10px auto;
+  padding: 50px;
+}
+
+label,
+input {
+  display: block;
+  width: 95%;
+}
+
+label {
+  margin-bottom: 5px;
+  height: 22px;
+}
+
+input {
+  margin-bottom: 20px;
+  padding: 10px;
+  border-radius: 3px;
+  border: 1px solid #777;
+}
+
+input.error {
+  border-color: red;
+}
+
+.input-feedback {
+  color: rgb(235, 54, 54);
+  margin-top: -15px;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.registerButton {
+  padding: 10px 15px;
+  width: 90%;
+  border-radius: 20px;
+  background-color: rgb(91, 109, 91);
+  color: white;
+  border: 1px solid rgb(91, 109, 91);
+  background-color: 250ms;
+  display: block; 
+}
+
+.registerButton:hover {
+  cursor: pointer;
+  background-color: white;
+  color: rgb(91, 109, 91);
+}
+
+.loginButton {
+  padding: 10px 15px;
+  width: 100%;
+  border-radius: 20px;
+  background-color: rgb(91, 109, 91);
+  color: white;
+  border: 1px solid rgb(91, 109, 91);
+  background-color: 250ms;
+  display: block; 
+}
+
+.loginButton:hover {
+  cursor: pointer;
+  background-color: white;
+  color: rgb(91, 109, 91);
+}
+
+/*a.nav_link:link {
+  text-decoration: none;
+}
+
+a.nav_link:hover {
+  cursor: pointer;
+  color: rgb(91, 109, 91);
+}*/
+
+select {
+  padding: 10px 15px;
+  width: 200px;
+  margin-bottom: 5px;
+  border-radius: 3px;
+}
+
+.container0 { 
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+}
+
+.container1 {
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+  margin-right: 100px;
+}
+.container3 {
+  display: flex; 
+}
+
+.container5 {
+  margin-left: 20px;
+}

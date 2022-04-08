@@ -23,6 +23,7 @@ class ArticleQuiz(models.Model):
     quiz2_answer = models.CharField(max_length=30)
     quiz3_answer = models.CharField(max_length=30)
     quiz4_answer = models.CharField(max_length=30)
+    issubmitted = models.BooleanField(default = False)
     email = models.ForeignKey('User', models.DO_NOTHING, db_column='email')
 
 class Study(models.Model):

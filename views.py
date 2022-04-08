@@ -19,17 +19,14 @@ import random
 import json
 from collections import OrderedDict
 from django.utils import timezone
-from sentence_transformers import SentenceTransformer, util
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
 import urllib3
-
 from .models import User, ArticleQuiz, Study
 from .serializers import UserSerializer, ArticleQuizSerializer, StudySerializer
 from .article_comprehension import compute
-import networkx
-import re
+from django.db.models import Avg
+from datetime import datetime
 
 class ListPost(generics.ListCreateAPIView):
     queryset = User.objects.all()
@@ -140,21 +137,17 @@ def LogIn(request) :
 # 지문 입력
 @api_view(['POST','GET'])
 def EnterArticle(request) :
+    id = 0
+    s_id = 0
     if request.method == 'POST':
-
         id_is_unique = True
-        id = 0
+        s_id_is_unique = True
         while id_is_unique:
             id = randint(1, 2147483647) # 지문 아이디 생성
             id_is_unique = ArticleQuiz.objects.filter(article_id=id).exists()
-        id_now.append(id)
-
-        s_id_is_unique = True
-        s_id = 0
         while s_id_is_unique:
             s_id = randint(1, 2147483647) # 학습 아이디 생성
             s_id_is_unique = Study.objects.filter(study_id=s_id).exists()
-        s_id_now.append(s_id)
 
         summary = models(request.data['content']) # 지문 요약문 생성
 
@@ -173,8 +166,9 @@ def EnterArticle(request) :
             quiz4_content = data1,
             quiz1_answer = 0,
             quiz2_answer = 0,
-            quiz3_answer = 0,
+            quiz3_answer = 0, 
             quiz4_answer = 0,
+            issubmitted = False,
             email_id = request.data['email'],
         )
 
@@ -198,8 +192,11 @@ def EnterArticle(request) :
             email = request.data['email'],
             article_id = id,
         )
-
-        return JsonResponse(request.data)
+        data = {
+            's_id': s_id,
+            'a_id': id,
+        }
+        return JsonResponse(data, safe=False)
     return JsonResponse(status=401, safe=False)
 
 # 학습하기 1단계 (학습하는 지문의 제목과 원문을 보냄)
@@ -208,13 +205,15 @@ def step1(request):
     title = ''
     content = ''
     if request.method == 'GET':
-        if ArticleQuiz.objects.filter(article_id=id_now[0]).exists():
-            article = ArticleQuiz.objects.get(article_id=id_now[0])
+        if ArticleQuiz.objects.filter(article_id=request.query_params['a_id']).exists():
+            article = ArticleQuiz.objects.get(article_id=request.query_params['a_id'])
             title = article.article_title
             content  = article.article_content
+            issubmitted = article.issubmitted
         data ={
             'title': title,
-            'content': content
+            'content': content,
+            'issubmitted' : issubmitted
         }
         return JsonResponse(data)
     else :
@@ -224,29 +223,58 @@ def step1(request):
 @api_view(['PUT','GET'])
 def step2(request):
     if request.method == 'GET':
-        if ArticleQuiz.objects.filter(article_id=id_now[0]).exists():
-            article = ArticleQuiz.objects.get(article_id=id_now[0])
+        if ArticleQuiz.objects.filter(article_id=request.query_params['a_id']).exists():
+            article = ArticleQuiz.objects.get(article_id=request.query_params['a_id'])
             title = article.article_title
             summary = article.article_summary
+            issubmitted = article.issubmitted
             jsonObject = json.loads(summary)
         data ={
             'title' : title,
             'summary': jsonObject['content'],
+            'issubmitted' : issubmitted
         }
         return JsonResponse(data)
+
     if request.method == 'PUT':
         if isinstance(request.data['user_summary'], list) :
             summary = " ".join(request.data['user_summary'])
         else:
             summary = request.data['user_summary']
-        if Study.objects.filter(study_id = s_id_now[0]).exists():
-            study = Study.objects.get(study_id = s_id_now[0])
+        if Study.objects.filter(study_id = request.query_params['s_id']).exists():
+            study = Study.objects.get(study_id = request.query_params['s_id'])
             study.user_summary = summary
             study.save()
             return JsonResponse(request.data, safe=False)
     else :
-            return JsonResponse(status=401, safe=False)
+        return JsonResponse(status=401, safe=False)
 
+@api_view(['GET'])
+def step4(request):
+    if request.method == 'GET':
+        if Study.objects.filter(study_id = request.query_params['s_id']).exists():
+            study = Study.objects.get(study_id = request.query_params['s_id'])
+            article = ArticleQuiz.objects.get(article_id=request.query_params['a_id'])
+            title = article.article_title
+            text = article.article_content
+            answer = article.article_summary
+            summary = json.loads(article.article_summary)
+            answer = summary['answer']
+            user_summary = study.user_summary
+            article_comprehension = compute(text, user_summary, answer)
+            study.article_comprehension = article_comprehension
+            study.save()
+            article.issubmitted = True
+            article.save()
+            data ={
+            'title' : title,
+            'article_comprehension' : article_comprehension,
+            'summary': answer
+        }
+        return JsonResponse(data)
+
+    else :
+        return JsonResponse(status=401, safe=False)
 """@api_view(['POST','GET'])
 def step3(request):""" # 어휘 문제와 관련된 DB와의 작업이 여기에 들어갈 것 같아요 
 
@@ -265,31 +293,6 @@ def Mypage(request):
         return JsonResponse(data)
     else :
             return JsonResponse(status=401, safe=False)
-
-@api_view(['GET'])
-def step4(request):
-    if request.method == 'GET':
-        if Study.objects.filter(study_id = s_id_now[0]).exists():
-            study = Study.objects.get(study_id = s_id_now[0])
-            article = ArticleQuiz.objects.get(article_id=id_now[0])
-            title = article.article_title
-            text = article.article_content
-            answer = article.article_summary
-            summary = json.loads(article.article_summary)
-            answer = summary['answer']
-            user_summary = study.user_summary
-            article_comprehension = compute(text, user_summary, answer)
-            study.article_comprehension = article_comprehension
-            study.save()
-            data ={
-            'title' : title,
-            'article_comprehension' : article_comprehension,
-            'summary': answer
-        }
-        return JsonResponse(data)
-
-    else :
-        return JsonResponse(status=401, safe=False)
 
 # 단어 검색
 @api_view(['POST','GET'])
@@ -341,8 +344,8 @@ def searchWord(request):
 def getAnswer(request):
     if request.method == 'POST':
         content=''
-        if ArticleQuiz.objects.filter(article_id=id_now[0]).exists():
-            article = ArticleQuiz.objects.get(article_id=id_now[0])
+        if ArticleQuiz.objects.filter(article_id=request.query_params['a_id']).exists():
+            article = ArticleQuiz.objects.get(article_id=request.query_params['a_id'])
             content  = article.article_content
         openApiURL = "http://aiopen.etri.re.kr:8000/MRCServlet"
         accessKey = "ed2296ff-a698-42e2-b72a-49fca2265500"
@@ -381,17 +384,22 @@ def GetHistory(request):
             user = User.objects.get(email = request.query_params['email'])
             if Study.objects.filter(email = user.email).exists():
                 study = Study.objects.filter(email = user.email)
-                for i,s in enumerate(study):
-                    date = s.study_date
+                total_study = len(study)
+                avg_article_comprehension =  study.aggregate(Avg('article_comprehension'))['article_comprehension__avg']
+
+                for i,s in enumerate(study.order_by('-study_date')): # 최근 학습 시간이 상단으로
+                    date = s.study_date.strftime("%Y-%m-%d %H:%M:%S") 
                     id = s.article_id
                     if ArticleQuiz.objects.filter(article_id = id).exists():
                         article = ArticleQuiz.objects.get(article_id = id)
                         title = article.article_title
                     titlelist.append([title,date])
-                    if i ==2: break
+                    if i == 4: break
             
         data ={
             'title': titlelist,
+            'total_study': total_study,
+            'avg_article_comprehension': round(avg_article_comprehension, 1),
         }
         return JsonResponse(data)
     else :
@@ -406,15 +414,17 @@ def GetMoreHistory(request):
             user = User.objects.get(email = request.query_params['email'])
             if Study.objects.filter(email = user.email).exists():
                 study = Study.objects.filter(email = user.email)
-                for s in study:
-                    date = s.study_date
+                for s in study.order_by('-study_date'):
+                    date = s.study_date.strftime("%Y-%m-%d %H:%M:%S")
                     step2_score = s.article_comprehension
                     step3_score = s.quiz_score
+                    s_id = s.study_id
                     id = s.article_id
                     if ArticleQuiz.objects.filter(article_id = id).exists():
                         article = ArticleQuiz.objects.get(article_id = id)
                         title = article.article_title
-                    titlelist.append([title,date,step2_score,step3_score])
+                        a_id = article.article_id
+                    titlelist.append([title,date,step2_score,step3_score,a_id,s_id])
             
         data ={
             'title': titlelist,

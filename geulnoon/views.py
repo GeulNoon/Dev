@@ -27,7 +27,8 @@ from .serializers import UserSerializer, ArticleQuizSerializer, StudySerializer
 from .article_comprehension import compute
 from .get_keywords import getKeywords#4.30추가
 from .keyword_score import computeKeywordScore#4.30추가
-from django.db.models import Avg
+from django.db.models import Avg,Count
+from django.db.models.functions import TruncMonth, TruncWeek, TruncDay
 from datetime import datetime
 
 class ListPost(generics.ListCreateAPIView):
@@ -39,6 +40,7 @@ class DetailPost(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
 
 model = BartForConditionalGeneration.from_pretrained('./kobart_summary')
+model3 = BartForConditionalGeneration.from_pretrained('./kobart_summary3')#4.30 요약모델 추가
 tokenizer = PreTrainedTokenizerFast.from_pretrained('gogamza/kobart-base-v1')
 
 # quiz content fake data
@@ -64,6 +66,13 @@ def models(article, keywordlist) : #4.30추가 summary json파일에 keyword 리
     output = model.generate(input_ids, eos_token_id=1, max_length=512, num_beams=5)
     output = tokenizer.decode(output[0], skip_special_tokens=True)
 
+    #4.30 요약모델 추가 3문장 요약문 생성
+    input_ids_3 = tokenizer.encode(text)
+    input_ids_3 = torch.tensor(input_ids_3)
+    input_ids_3 = input_ids_3.unsqueeze(0)
+    output_3 = model3.generate(input_ids_3, eos_token_id=1, max_length=512, num_beams=5)
+    output_3 = tokenizer.decode(output_3[0], skip_special_tokens=True)
+    
     #요약결과(output)를 토대로 문제 생성    
     content = output.split(' ')
     answerlist = []
@@ -87,7 +96,7 @@ def models(article, keywordlist) : #4.30추가 summary json파일에 keyword 리
     file_data["content"] = answerlist
     #answer: 요약문 정답
     file_data["answer"] = output
-    
+    file_data["answer_3"] = output_3 #4.30 요약모델 추가
     file_data["keyword"] = keywordlist #4.30추가 summary json파일에 keyword 리스트도 저장
     
     #json파일(DB에 저장할 json파일 생성)
@@ -283,9 +292,12 @@ def step4(request):
             text = article.article_content
             answer = article.article_summary
             summary = json.loads(article.article_summary)
-            answer = summary['answer']
-            keywordlist = summary['keyword'] #4.30추가
             user_summary = study.user_summary
+            if(user_summary.count('.')<=1): #4.30 요약모델 추가 2문장이상일 경우 자동으로 3문장 답안으로 채점
+                answer = summary['answer']
+            else:
+                answer = summary['answer_3']
+            keywordlist = summary['keyword'] #4.30추가
             article_comprehension = compute(user_summary, answer, keywordlist)
             study.article_comprehension = article_comprehension
             keyword_user_answer = json.loads(study.keyword_user_answer)#4.30추가
@@ -298,7 +310,7 @@ def step4(request):
             'summary': answer,
             'keyword_score': keyword_score,#4.30추가
             'keyword_answer': keywordlist,#4.30추가
-            'keyword_user_answer': keyword_user_answer#4.30추가
+            'keyword_user_answer': keyword_user_answer,#4.30추가
         }
         return JsonResponse(data)
 
@@ -445,7 +457,7 @@ def getAnswer(request):
             return JsonResponse(status=401, safe=False)
 
 # 학습기록 요약버전
-@api_view(['POST','GET'])
+@api_view(['GET'])
 def GetHistory(request):
     if request.method == 'GET':
         titlelist = []
@@ -464,12 +476,39 @@ def GetHistory(request):
                         title = article.article_title
                     titlelist.append([title,date])
                     if i == 4: break
+                study_count_day = study.annotate(day=TruncDay('study_date')).values('day').annotate(cnt=Count('study_id')).values('day', 'cnt').order_by('day')[:5]
+                print(study_count_day)
             
         data ={
             'title': titlelist,
             'total_study': total_study,
             'avg_article_comprehension': round(avg_article_comprehension, 1),
             'avg_keyword_score': round(avg_keyword_score,1)#4.30추가
+        }
+        return JsonResponse(data)
+    else :
+            return JsonResponse(status=401, safe=False)
+
+@api_view(['GET'])
+def GetStatistics(request):
+    if request.method == 'GET':
+        print(request.query_params['option'])
+        if User.objects.filter(email = request.query_params['email']).exists():
+            user = User.objects.get(email = request.query_params['email'])
+            if Study.objects.filter(email = user.email).exists():
+                study = Study.objects.filter(email = user.email)
+                if request.query_params['option'] == '0':
+                    study_count = study.annotate(day=TruncDay('study_date')).values('day').annotate(cnt=Count('study_id')).values('day', 'cnt').order_by('-day')[:5]
+                    study_avg = study.annotate(day=TruncDay('study_date')).values('day').annotate(avg1=Avg('article_comprehension'), avg2=Avg('quiz_score'), avg3=Avg('keyword_score')).values('day', 'avg1','avg2','avg3').order_by('-day')[:5]
+                elif  request.query_params['option'] == '1':
+                    study_count = study.annotate(day=TruncWeek('study_date')).values('day').annotate(cnt=Count('study_id')).values('day', 'cnt').order_by('-day')[:5]
+                    study_avg = study.annotate(day=TruncWeek('study_date')).values('day').annotate(avg1=Avg('article_comprehension'), avg2=Avg('quiz_score'), avg3=Avg('keyword_score')).values('day', 'avg1','avg2','avg3').order_by('-day')[:5]
+                elif  request.query_params['option'] == '2':
+                    study_count = study.annotate(day=TruncMonth('study_date')).values('day').annotate(cnt=Count('study_id')).values('day', 'cnt').order_by('-day')[:5]
+                    study_avg = study.annotate(day=TruncMonth('study_date')).values('day').annotate(avg1=Avg('article_comprehension'), avg2=Avg('quiz_score'), avg3=Avg('keyword_score')).values('day', 'avg1','avg2','avg3').order_by('-day')[:5]
+                print(list(study_count), list(study_avg))
+        data ={
+            'avg_keyword_score':0
         }
         return JsonResponse(data)
     else :

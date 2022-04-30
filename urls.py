@@ -8,9 +8,11 @@ urlpatterns = [
     path('signup', views.SignUp),
     path('login', views.LogIn),
     path('study', views.EnterArticle),
+    path('title/', views.title),
     path('Step1/', views.step1),
     path('Step2/', views.step2),
     path('Step4/', views.step4),
+    path('Step5/', views.step5),#4.30추가
     path('MyPage/', views.Mypage),
     path('searchWord/', views.searchWord),
     path('getAnswer/', views.getAnswer),

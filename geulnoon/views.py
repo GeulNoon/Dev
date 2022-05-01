@@ -27,9 +27,12 @@ from .serializers import UserSerializer, ArticleQuizSerializer, StudySerializer
 from .article_comprehension import compute
 from .get_keywords import getKeywords#4.30추가
 from .keyword_score import computeKeywordScore#4.30추가
-from django.db.models import Avg,Count
-from django.db.models.functions import TruncMonth, TruncWeek, TruncDay
+from django.db.models import Avg,Count#5.01추가
+from django.db.models.functions import TruncMonth, TruncWeek, TruncDay#5.01추가
 from datetime import datetime
+from .exam_word import wordList
+from .Word import test01, test02, test03
+
 
 class ListPost(generics.ListCreateAPIView):
     queryset = User.objects.all()
@@ -40,7 +43,7 @@ class DetailPost(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
 
 model = BartForConditionalGeneration.from_pretrained('./kobart_summary')
-model3 = BartForConditionalGeneration.from_pretrained('./kobart_summary3')#4.30 요약모델 추가
+model3 = BartForConditionalGeneration.from_pretrained('./kobart_summary3')#5.01추가
 tokenizer = PreTrainedTokenizerFast.from_pretrained('gogamza/kobart-base-v1')
 
 # quiz content fake data
@@ -66,7 +69,7 @@ def models(article, keywordlist) : #4.30추가 summary json파일에 keyword 리
     output = model.generate(input_ids, eos_token_id=1, max_length=512, num_beams=5)
     output = tokenizer.decode(output[0], skip_special_tokens=True)
 
-    #4.30 요약모델 추가 3문장 요약문 생성
+    #5.01추가
     input_ids_3 = tokenizer.encode(text)
     input_ids_3 = torch.tensor(input_ids_3)
     input_ids_3 = input_ids_3.unsqueeze(0)
@@ -96,7 +99,7 @@ def models(article, keywordlist) : #4.30추가 summary json파일에 keyword 리
     file_data["content"] = answerlist
     #answer: 요약문 정답
     file_data["answer"] = output
-    file_data["answer_3"] = output_3 #4.30 요약모델 추가
+    file_data["answer_3"] = output_3 #5.01추가
     file_data["keyword"] = keywordlist #4.30추가 summary json파일에 keyword 리스트도 저장
     
     #json파일(DB에 저장할 json파일 생성)
@@ -170,6 +173,9 @@ def EnterArticle(request) :
         summary = models(request.data['content'], keywordlist) # 지문 요약문 생성
 
         # 어휘 문제 생성 함수는 여기에 들어 갈 것 같아요
+        text = request.data['content']
+        temp = text.split(". ")
+        wordlist = wordList(temp)
         
         # 지문 DB에 사용자 지문 / 요약문 / 생성 문제 삽입
         ArticleQuiz.objects.create(
@@ -179,14 +185,14 @@ def EnterArticle(request) :
             article_title = request.data['title'],
             article_summary = summary,
             article_keyword = keywordQuiz,  #4.30추가
-            quiz1_content = data1,
-            quiz2_content = data1,
-            quiz3_content = data1,
-            quiz4_content = data1,
-            quiz1_answer = 0,
+            quiz1_content =  test01.t01(wordlist[0]),
+            quiz2_content = test02.t02(wordlist[1], temp),
+            quiz3_content = test02.t02(wordlist[2], temp),
+            quiz4_content = test03.t03(wordlist[3]),
+            quiz1_answer = wordlist[0],
             quiz2_answer = 0,
             quiz3_answer = 0, 
-            quiz4_answer = 0,
+            quiz4_answer = wordlist[3],
             email_id = request.data['email'],
         )
 
@@ -244,7 +250,15 @@ def step1(request):
                 article = ArticleQuiz.objects.get(article_id=request.query_params['a_id'])
                 study = Study.objects.get(study_id = request.query_params['s_id'])
                 content  = article.article_content
-                issubmitted = study.issubmitted
+                quiz_1 = article.quiz1_content#5.01추가(문제 확인 용)
+                print(quiz_1)#5.01추가(문제 확인 용)
+                quiz_2 = article.quiz2_content#5.01추가(문제 확인 용)
+                print(quiz_2)#5.01추가(문제 확인 용)
+                quiz_3 = article.quiz3_content#5.01추가(문제 확인 용)
+                print(quiz_3)#5.01추가(문제 확인 용)
+                quiz_4 = article.quiz4_content#5.01추가(문제 확인 용)
+                print(quiz_4)#5.01추가(문제 확인 용)
+                issubmitted = study.issubmitted#5.01추가(문제 확인 용)
         data ={
             'content': content,
             'issubmitted' : issubmitted
@@ -292,11 +306,11 @@ def step4(request):
             text = article.article_content
             answer = article.article_summary
             summary = json.loads(article.article_summary)
-            user_summary = study.user_summary
-            if(user_summary.count('.')<=1): #4.30 요약모델 추가 2문장이상일 경우 자동으로 3문장 답안으로 채점
-                answer = summary['answer']
-            else:
-                answer = summary['answer_3']
+            user_summary = study.user_summary#5.01추가
+            if(user_summary.count('.')<=1): #5.01추가 2문장이상일 경우 자동으로 3문장 답안으로 채점
+                answer = summary['answer'] #5.01추가
+            else:#5.01추가
+                answer = summary['answer_3']#5.01추가
             keywordlist = summary['keyword'] #4.30추가
             article_comprehension = compute(user_summary, answer, keywordlist)
             study.article_comprehension = article_comprehension
@@ -476,8 +490,6 @@ def GetHistory(request):
                         title = article.article_title
                     titlelist.append([title,date])
                     if i == 4: break
-                study_count_day = study.annotate(day=TruncDay('study_date')).values('day').annotate(cnt=Count('study_id')).values('day', 'cnt').order_by('day')[:5]
-                print(study_count_day)
             
         data ={
             'title': titlelist,
@@ -488,11 +500,11 @@ def GetHistory(request):
         return JsonResponse(data)
     else :
             return JsonResponse(status=401, safe=False)
-
+        
+#5.01추가
 @api_view(['GET'])
 def GetStatistics(request):
     if request.method == 'GET':
-        print(request.query_params['option'])
         if User.objects.filter(email = request.query_params['email']).exists():
             user = User.objects.get(email = request.query_params['email'])
             if Study.objects.filter(email = user.email).exists():
@@ -506,9 +518,9 @@ def GetStatistics(request):
                 elif  request.query_params['option'] == '2':
                     study_count = study.annotate(day=TruncMonth('study_date')).values('day').annotate(cnt=Count('study_id')).values('day', 'cnt').order_by('-day')[:5]
                     study_avg = study.annotate(day=TruncMonth('study_date')).values('day').annotate(avg1=Avg('article_comprehension'), avg2=Avg('quiz_score'), avg3=Avg('keyword_score')).values('day', 'avg1','avg2','avg3').order_by('-day')[:5]
-                print(list(study_count), list(study_avg))
         data ={
-            'avg_keyword_score':0
+            'study_count':list(study_count),
+            'study_avg':list(study_avg)
         }
         return JsonResponse(data)
     else :

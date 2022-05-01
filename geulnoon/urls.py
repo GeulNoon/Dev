@@ -17,5 +17,6 @@ urlpatterns = [
     path('searchWord/', views.searchWord),
     path('getAnswer/', views.getAnswer),
     path('getHistory/', views.GetHistory),
+    path('getStatistics/', views.GetStatistics),#5.01추가
     path('getMoreHistory/', views.GetMoreHistory),
 ]

@@ -21,8 +21,8 @@ class ArticleQuiz(models.Model):
     quiz3_content = models.JSONField()
     quiz4_content = models.JSONField()
     quiz1_answer = models.CharField(max_length=30)
-    quiz2_answer = models.CharField(max_length=30)
-    quiz3_answer = models.CharField(max_length=30)
+    quiz2_answer = models.CharField(max_length=400)
+    quiz3_answer = models.CharField(max_length=400)
     quiz4_answer = models.CharField(max_length=30)
     email = models.ForeignKey('User', models.DO_NOTHING, db_column='email')
 
@@ -30,6 +30,7 @@ class Study(models.Model):
     study_id = models.IntegerField(primary_key=True)
     study_date = models.DateTimeField()
     study_type = models.IntegerField()
+    choice = models.JSONField()
     user_summary = models.CharField(max_length=2000, blank=True, null=True)
     quiz_count = models.IntegerField()
     quiz1_user_answer = models.CharField(max_length=30, blank=True, null=True)

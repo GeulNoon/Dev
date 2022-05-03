@@ -39,6 +39,7 @@ class StudySerializer(serializers.ModelSerializer):
             'study_id',
             'study_date',
             'study_type',
+            'choice',
             'user_summary',
             'quiz_count',
             'quiz1_user_answer',

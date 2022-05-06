@@ -15,5 +15,5 @@ def computeKeywordScore (user_answer, answer):
                 if similarity >= 0.9:
                     score += 1
             except:
-                print("단어가 없습니다!")
+                score += 0 #print문 제거
     return round(score/len(answer)*100,1)

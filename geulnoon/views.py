@@ -2,6 +2,7 @@ import email
 from http.client import HTTPResponse
 from importlib.resources import contents
 from pickle import FALSE
+from secrets import choice
 from urllib import response
 from django.shortcuts import render
 from rest_framework import generics
@@ -327,13 +328,16 @@ def step2(request):
     else :
         return JsonResponse(status=401, safe=False)
 
+#5.05 어휘 부분 수정
 @api_view(['GET'])
 def step4(request):
     if request.method == 'GET':
         if Study.objects.filter(study_id = request.query_params['s_id']).exists():
             study = Study.objects.get(study_id = request.query_params['s_id'])
             article = ArticleQuiz.objects.get(article_id=request.query_params['a_id'])
-            text = article.article_content
+            if User.objects.filter(email = study.email).exists():
+                user = User.objects.get(email = study.email)
+                name = user.nickname
             answer = article.article_summary
             summary = json.loads(article.article_summary)
             user_summary = study.user_summary#5.01추가
@@ -342,26 +346,123 @@ def step4(request):
             else:#5.01추가
                 answer = summary['answer_3']#5.01추가
             keywordlist = summary['keyword'] #4.30추가
+            
+            #5.05 어휘 부분 수정
+            quiz_score = 0
+            q2_c = []
+            q3_c = []
+            q2 = study.quiz2_user_answer[1:-1].split(', ')
+            a2 = article.quiz2_answer[1:-1].split(', ')
+            q3 = study.quiz3_user_answer[1:-1].split(', ')
+            a3 = article.quiz3_answer[1:-1].split(', ')
+
+            if(article.quiz1_answer == study.quiz1_user_answer):
+                study.quiz1_user_answer_correct = 1
+                quiz_score += 25
+            else : 
+                study.quiz1_user_answer_correct = 0
+
+            for i in range(len(q2)):
+                if(a2[i] == q2[i]):
+                    q2_c.append(1)
+                else: 
+                    q2_c.append(0)    
+            study.quiz2_user_answer_correct = q2_c
+
+            for i in range(len(q3)):
+                if(a3[i] == q3[i]):
+                    q3_c.append(1)
+                else: 
+                    q3_c.append(0)
+            study.quiz3_user_answer_correct = q3_c 
+            is_q2_c = 0
+            is_q3_c = 0
+            if(0 not in q2_c):
+                    quiz_score += 25
+                    is_q2_c = 1
+            if(0 not in q3_c):
+                    quiz_score += 25
+                    is_q3_c = 1
+
+            if(article.quiz4_answer == study.quiz4_user_answer):
+                study.quiz4_user_answer_correct = 1
+                quiz_score += 25
+            else:
+                study.quiz4_user_answer_correct = 0 
+            
+            study.quiz_score = quiz_score
+            print(quiz_score)
+            
+            is_word_c = []
+            is_word_c.append(study.quiz1_user_answer_correct)
+            is_word_c.append(is_q2_c)
+            is_word_c.append(is_q3_c)
+            is_word_c.append(study.quiz4_user_answer_correct)
+            print(is_word_c)
+            
+            quiz1 = dict()
+            quiz2 = dict()
+            quiz3 = dict()
+            quiz4 = dict()
+            quiz1["Test"] = article.quiz1_content["TEST1"]
+            quiz1["Choice"] = study.choice["1"]
+            quiz1["Answer"] = article.quiz1_content["ANSWER"]
+            quiz1["Mean"] = article.quiz1_content["CHOICE"]
+            quiz1["Answer_u"] = study.quiz1_user_answer
+            quiz2["Test"] = article.quiz2_content["TYPE2"]
+            quiz2["Word"] = article.quiz2_content["WORD"]
+            quiz2["Sentence"] = ''.join(article.quiz2_content["SENTENCE"])
+            quiz2["MEAN"] = article.quiz2_content["CHOICE"]
+            quiz2["Choice"] = study.choice["2"]
+            q2 = study.quiz2_user_answer[1:-1].split(', ')
+            quiz2["Answer_u"] = q2
+            quiz2["Is_Correct"] = q2_c
+            quiz3["Test"] = article.quiz3_content["TYPE2"]
+            quiz3["Word"] = article.quiz3_content["WORD"]
+            quiz3["Sentence"] = ''.join(article.quiz3_content["SENTENCE"])
+            quiz3["MEAN"] = article.quiz3_content["CHOICE"]
+            quiz3["Choice"] = study.choice["3"]
+            q3 = study.quiz3_user_answer[1:-1].split(', ')
+            quiz3["Answer_u"] = q3
+            quiz3["Is_Correct"] = q3_c
+            quiz4["Test"] = article.quiz4_content["MEAN"]
+            quiz4["Choice"] = study.choice["4"]
+            quiz4["Answer"] = article.quiz4_content["ANSWER"]
+            quiz4["Mean"] = article.quiz4_content["CHOICE"]
+            quiz4["Answer_u"] = study.quiz4_user_answer
+            
+            print(quiz2,quiz3)
+            
             article_comprehension = compute(user_summary, answer, keywordlist)
             study.article_comprehension = article_comprehension
-            keyword_user_answer = json.loads(study.keyword_user_answer)#4.30추가
-            keyword_score = computeKeywordScore(keyword_user_answer, keywordlist)#4.30추가
+            keyword_user_answer = {'answer': [{'id': 0, 'value': '0'}]}#5.05수정
+            try:
+                keyword_user_answer = json.loads(study.keyword_user_answer)#5.05수정
+                keyword_score = computeKeywordScore(keyword_user_answer, keywordlist)#5.05수정
+            except:
+                keyword_score = 0#5.05수정
             study.keyword_score = keyword_score#4.30추가
             study.issubmitted = True
             study.save()
-            data ={
+        data ={
+            'name' : name,
             'article_comprehension' : article_comprehension,
             'summary': answer,
             'keyword_score': keyword_score,#4.30추가
             'keyword_answer': keywordlist,#4.30추가
             'keyword_user_answer': keyword_user_answer,#4.30추가
+            'is_word_correct' : is_word_c,
+            'quiz1' : quiz1,
+            'quiz2' : quiz2,
+            'quiz3' : quiz3,
+            'quiz4' : quiz4,
         }
         return JsonResponse(data)
 
     else :
         return JsonResponse(status=401, safe=False)
 
-@api_view(['POST','GET'])
+@api_view(['PUT','GET'])
 def step3(request):# 어휘 문제와 관련된 DB와의 작업이 여기에 들어갈 것 같아요
     if request.method == 'GET':
         if ArticleQuiz.objects.filter(article_id=request.query_params['a_id']).exists():
@@ -394,15 +495,30 @@ def step3(request):# 어휘 문제와 관련된 DB와의 작업이 여기에 들
                 quiz3["User_answer"] = quiz3_user_answer
                 quiz4["Test"] = article.quiz4_content["MEAN"]
                 quiz4["Choice"] = study.choice["4"]
+                issubmitted = study.issubmitted
 
                 data ={
                 'quiz1' : quiz1,
                 'quiz2' : quiz2,
                 'quiz3' : quiz3,
-                'quiz4' : quiz4
+                'quiz4' : quiz4,
+                'issubmitted' : issubmitted
         }
         return JsonResponse(data)
 
+    if request.method == 'PUT':
+        if Study.objects.filter(study_id = request.query_params['s_id']).exists():
+            q1 = request.data['answer'][0]
+            q2 = request.data['answer'][1]
+            q3 = request.data['answer'][2]
+            q4 = request.data['answer'][3]
+            study = Study.objects.get(study_id = request.query_params['s_id'])
+            study.quiz1_user_answer = q1['value']
+            study.quiz2_user_answer = q2['value']
+            study.quiz3_user_answer = q3['value']
+            study.quiz4_user_answer = q4['value']
+            study.save()
+            return JsonResponse(request.data, safe=False)
     else :
         return JsonResponse(status=401, safe=False)
 
@@ -635,7 +751,7 @@ def GetMoreHistory(request):
     else :
             return JsonResponse(status=401, safe=False)
 
-# 오답노트 기능 5.03 추가
+# 오답노트 기능 5.05 수정
 @api_view(['PUT','GET'])
 def ReviewStudy(request):
     s_id = 0
@@ -645,11 +761,15 @@ def ReviewStudy(request):
             while s_id_is_unique:
                 s_id = randint(1, 2147483647) # 학습 아이디 생성
                 s_id_is_unique = Study.objects.filter(study_id=s_id).exists()
+            if Study.objects.filter(study_id = request.data['s_id']).exists(): #5.04 수정
+                study = Study.objects.get(study_id = request.data['s_id'])#5.04 수정
+                choice = study.choice#5.04 수정
             Study.objects.create(
             study_id = s_id,
             study_date = timezone.now(),
             study_type = 0,
             user_summary = '',
+            choice = choice,
             quiz_count = 1,
             quiz1_user_answer = '',
             quiz2_user_answer = '',

@@ -2,7 +2,6 @@ import email
 from http.client import HTTPResponse
 from importlib.resources import contents
 from pickle import FALSE
-from secrets import choice
 from urllib import response
 from django.shortcuts import render
 from rest_framework import generics
@@ -442,6 +441,7 @@ def step4(request):
             except:
                 keyword_score = 0#5.05수정
             study.keyword_score = keyword_score#4.30추가
+            avg_article_comprehension = (article_comprehension+keyword_score)/2 
             study.issubmitted = True
             study.save()
         data ={
@@ -449,6 +449,7 @@ def step4(request):
             'article_comprehension' : article_comprehension,
             'summary': answer,
             'keyword_score': keyword_score,#4.30추가
+            'avg_article_comporehension' : avg_article_comprehension,
             'keyword_answer': keywordlist,#4.30추가
             'keyword_user_answer': keyword_user_answer,#4.30추가
             'is_word_correct' : is_word_c,

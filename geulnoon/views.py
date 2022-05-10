@@ -1,3 +1,4 @@
+from ast import Try
 import email
 from http.client import HTTPResponse
 from importlib.resources import contents
@@ -31,7 +32,8 @@ from django.db.models import Avg,Count#5.01추가
 from django.db.models.functions import TruncMonth, TruncWeek, TruncDay#5.01추가
 from datetime import datetime
 from .exam_word import wordList
-from .Word import test01, test02, test03
+from .Word import test01, test02, test03, test04
+from django.db.models import Max
 
 
 class ListPost(generics.ListCreateAPIView):
@@ -271,7 +273,7 @@ def step1(request):
     if request.method == 'PUT':
         if ArticleQuiz.objects.filter(article_id=request.data['a_id']).exists():
             if Study.objects.filter(study_id = request.data['s_id']).exists():
-                article = ArticleQuiz.objects.get(article_id=request.data['a_id'])
+                article = ArticleQuiz.objects.get(article_id=request.data['a_id']) 
                 study = Study.objects.get(study_id = request.data['s_id'])
                 text = article.article_content
                 temp = text.split(". ")
@@ -319,7 +321,7 @@ def step1(request):
                 data ={
                     's2': "ok",
                 }
-            return JsonResponse(data)
+                return JsonResponse(data)
     else :
             return JsonResponse(status=401, safe=False)
 
@@ -333,6 +335,17 @@ def step2(request):
                 study = Study.objects.get(study_id = request.query_params['s_id'])
                 summary = article.article_summary
                 user_summary = study.user_summary #5.08 추가
+                if(user_summary == ''):
+                    user_summary = ''
+                elif(user_summary[1] == '1'):
+                    user_summary = user_summary[5:-2]
+                elif(user_summary[1] == '3'):
+                    user_summary_dict = eval(user_summary)
+                    user_summary = ''
+                    for i in user_summary_dict[3]:
+                        user_summary += i
+                else:
+                    user_summary = ''
                 issubmitted = study.issubmitted
                 jsonObject = json.loads(summary)
         data ={
@@ -340,16 +353,22 @@ def step2(request):
             's1': jsonObject['s1'],
             's2': jsonObject['s2'],
             's3': jsonObject['s3'],
-            'issubmitted' : issubmitted,  #5.08 추가
+            'issubmitted' : issubmitted,
             'user_summary' : user_summary
         }
         return JsonResponse(data)
 
     if request.method == 'PUT':
-        if isinstance(request.data['user_summary'], list) :
-            summary = " ".join(request.data['user_summary'])
+        summary = {}
+        print(request.data)
+        if(request.data['type'] == 1):
+            if isinstance(request.data['user_summary'], list) :
+                summary = {request.data['type']: " ".join(request.data['user_summary'])}
+            else:
+                summary = {request.data['type']: request.data['user_summary']}
         else:
-            summary = request.data['user_summary']
+            summary = {request.data['type']: request.data['user_summary']}
+            print(summary)
         if Study.objects.filter(study_id = request.query_params['s_id']).exists():
             study = Study.objects.get(study_id = request.query_params['s_id'])
             study.user_summary = summary
@@ -369,14 +388,28 @@ def step4(request):
                 name = user.nickname
             answer = article.article_summary
             summary = json.loads(article.article_summary)
-            user_summary = study.user_summary#5.01추가
-            if(user_summary.count('.')<=1): #5.01추가 2문장이상일 경우 자동으로 3문장 답안으로 채점
+
+            try:#5.09 2단계 제출 없이 진행할 경우 오류 처리
+                for v, k in eval(study.user_summary).items():
+                    sentnecne_len = v
+                    user_summary = k
+            except:
+                print('exception!')
+                sentnecne_len = 1
+                user_summary = ''
+            
+            keywordlist = summary['keyword']
+
+            #user_summary = study.user_summary#5.01추가
+            if(sentnecne_len == 1): #5.01추가 2문장이상일 경우 자동으로 3문장 답안으로 채점
                 answer = summary['answer'] #5.01추가
+                keywordlist_sum  = keywordlist #4.30추가
+
             else:#5.01추가
                 answer = summary['answer_3']#5.01추가
-            keywordlist = summary['keyword'] #4.30추가
+                keywordlist_sum = {'s1': summary['s1'],'s2': summary['s2'], 's3': summary['s3']}
+
             
-            #5.05 어휘 부분 수정
             quiz_score = 0
             q2_c = []
             q3_c = []
@@ -406,6 +439,7 @@ def step4(request):
             study.quiz3_user_answer_correct = q3_c 
             is_q2_c = 0  #5.08 추가
             is_q3_c = 0  #5.08 추가
+
             if(0 not in q2_c):
                     quiz_score += 25
                     is_q2_c = 1  #5.08 추가
@@ -420,8 +454,7 @@ def step4(request):
                 study.quiz4_user_answer_correct = 0 
             
             study.quiz_score = quiz_score
-            print(quiz_score)
-            
+
             ##5.08 추가
             is_word_c = [] 
             is_word_c.append(study.quiz1_user_answer_correct)
@@ -460,11 +493,9 @@ def step4(request):
             quiz4["Answer"] = article.quiz4_content["ANSWER"]
             quiz4["Mean"] = article.quiz4_content["CHOICE"]
             quiz4["Answer_u"] = study.quiz4_user_answer
-            
-            print(quiz2,quiz3)
-            ##5.08 추가
-            
-            article_comprehension = compute(user_summary, answer, keywordlist)
+            quiz_score = study.quiz_score # 5.09 추가
+
+            article_comprehension = compute(sentnecne_len, user_summary, answer, keywordlist_sum)
             study.article_comprehension = article_comprehension
             keywordlist= keywordlist[:5]#5.08 추가
             keyword_user_answer = {'answer': [{'id': 0, 'value': '0'}]}#5.05수정
@@ -491,6 +522,7 @@ def step4(request):
             'quiz2' : quiz2,#5.08 추가
             'quiz3' : quiz3,#5.08 추가
             'quiz4' : quiz4,#5.08 추가
+            'quiz_score': quiz_score,#5.09 추가
         }
         return JsonResponse(data)
 
@@ -618,7 +650,7 @@ def step5(request):
     
 
 # 마이페이지 
-@api_view(['DELETE','GET','PUT'])
+@api_view(['DELETE', 'GET', 'PUT'])
 def Mypage(request):
     if request.method == 'GET':
         if User.objects.filter(email = request.query_params['email']).exists():
@@ -630,6 +662,7 @@ def Mypage(request):
             'birthyear': birthyear
         }
         return JsonResponse(data)
+
     if request.method == 'DELETE':
         if User.objects.filter(email = request.data['email']).exists():
             user = User.objects.get(email = request.data['email'])
@@ -657,7 +690,7 @@ def Mypage(request):
         }
         return JsonResponse(data)
     else :
-            return JsonResponse(status=401, safe=False)    
+            return JsonResponse(status=401, safe=False)
 
 # 단어 검색
 @api_view(['POST','GET'])
@@ -827,16 +860,18 @@ def GetMoreHistory(request):
                     step4_score = s.keyword_score#4.30추가
                     s_id = s.study_id
                     id = s.article_id
+                    study_type = s.study_type
                     if ArticleQuiz.objects.filter(article_id = id).exists():
                         article = ArticleQuiz.objects.get(article_id = id)
                         title = article.article_title
                         a_id = article.article_id
-                    titlelist.append([title,date,step2_score,step3_score,step4_score,a_id,s_id])#4.30추가
+                    titlelist.append([title,date,step2_score,step3_score,step4_score,a_id,s_id,study_type])#4.30추가
             
         data ={
             'title': titlelist,
         }
         return JsonResponse(data)
+
     #5.08 추가(study 삭제 기능)
     if request.method == 'DELETE':
         if Study.objects.filter(study_id = request.data['s_id']).exists():
@@ -852,6 +887,45 @@ def GetMoreHistory(request):
     else :
             return JsonResponse(status=401, safe=False)
 
+# 학습기록 더보기
+@api_view(['POST','GET'])
+def GetMoreReview(request):
+    if request.method == 'GET':
+        titlelist = []
+        if User.objects.filter(email = request.query_params['email']).exists():
+            user = User.objects.get(email = request.query_params['email'])
+            if ArticleQuiz.objects.filter(email = user.email).exists():
+                article = ArticleQuiz.objects.filter(email = user.email)
+                study = Study.objects.filter(email = user.email)
+                #a = study.order_by('-study_date').values_list('article_id',flat=True)
+                a = article.values_list('article_id',flat=True)
+                print(a)
+                for i in a:
+                    title = article.get(article_id=i).article_title
+                    print(Study.objects.filter(article_id=i))
+                    if (Study.objects.filter(article_id=i).exists()):
+                        count = study.filter(article_id=i).count()
+                        #date = study.filter(a_id=i).latest('study_date')
+                        date = study.filter(article_id=i).aggregate(Max('study_date')).get('study_date__max').strftime("%Y-%m-%d %H:%M:%S")
+                        article_comprehension = study.filter(article_id=i).aggregate(Max('article_comprehension')).get('article_comprehension__max')
+                        quiz_score = study.filter(article_id=i).aggregate(Max('quiz_score')).get('quiz_score__max')
+                        keyword_score = study.filter(article_id=i).aggregate(Max('keyword_score')).get('keyword_score__max')
+                    else:
+                        date = '0000-00-00 00:00:00'
+                        count = 0
+                        article_comprehension = 0
+                        quiz_score = 0
+                        keyword_score = 0
+                    print(titlelist)
+                    titlelist.append([title, date, count, article_comprehension, quiz_score, keyword_score, i])
+        titlelist.sort(key=lambda x: -int(''.join(x[1].replace("-", " ").replace(":", " ").split(" "))))
+        data ={
+            'title': titlelist,
+        }
+        return JsonResponse(data)
+    else :
+            return JsonResponse(status=401, safe=False)
+
 # 오답노트 기능 5.08 추가
 @api_view(['PUT','GET'])
 def ReviewStudy(request):
@@ -859,12 +933,23 @@ def ReviewStudy(request):
     if request.method == 'PUT':
         if ArticleQuiz.objects.filter(article_id=request.data['a_id']).exists():
             s_id_is_unique = True
+            choice = OrderedDict()
             while s_id_is_unique:
                 s_id = randint(1, 2147483647) # 학습 아이디 생성
-                s_id_is_unique = Study.objects.filter(study_id=s_id).exists() #5.08 추가
-            if Study.objects.filter(study_id = request.data['s_id']).exists(): #5.04 수정
-                study = Study.objects.get(study_id = request.data['s_id'])#5.04 수정
-                choice = study.choice#5.04 수정
+                s_id_is_unique = Study.objects.filter(study_id=s_id).exists() #5.08 추가 
+            article = ArticleQuiz.objects.get(article_id=request.data['a_id']) 
+            a = list(article.quiz1_content["CHOICE"].keys())
+            b = list(article.quiz2_content["CHOICE"].values())
+            c = list(article.quiz3_content["CHOICE"].values())
+            d = list(article.quiz4_content["CHOICE"].keys())
+            random.shuffle(a)
+            random.shuffle(b)
+            random.shuffle(c)
+            random.shuffle(d)
+            choice["1"] = a
+            choice["2"] = b
+            choice["3"] = c
+            choice["4"] = d
             Study.objects.create(
             study_id = s_id,
             study_date = timezone.now(),
@@ -894,3 +979,4 @@ def ReviewStudy(request):
         return JsonResponse(data)
     else :
             return JsonResponse(status=401, safe=False)
+

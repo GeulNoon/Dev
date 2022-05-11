@@ -5,13 +5,19 @@ from .W2V_word import W2V
 
 # 콤마, 괄호 삭제
 def REMOVE(st):
-    row = st
-    row2 = ' '.join(s for s in row)
-    remove = "'}"
+    row = ' '.join(s for s in st)
+    remove = "}"
     for x in range(len(remove)):
-        row3 = row2.replace(remove[x],"")
-    row4 = row3.replace("'","")
-    return row4
+        row1 = row.replace(remove[x],"")
+    row2 = row1.replace("'","")
+    row3 = row2.split('.')
+    strip_li = []
+    for i in row3:
+        i = i.strip()
+        if i:
+            strip_li.append(i)
+        
+    return strip_li
 
 #W2V 어휘들 뜻
 def W2V_MEAN(w2v_word):

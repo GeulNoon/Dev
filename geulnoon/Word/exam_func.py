@@ -73,17 +73,41 @@ def TEST(word):
                 "코드":None,
                 "용례":None,
             }
+    def parse3(ex):
+        try:
+            CODE = item.find("link_target_code").get_text()
+            SIMILAR = item.find("word").get_text()
+            p3 = dict()
+            p3["예시"]= ex
+            p3["코드"]=CODE
+            p3["유의어"] = SIMILAR
+            return p3
+
+        except AttributeError as e:
+            return 0
     example_result = []
+    similar_result = []
     for code in target_row:
         word2 = code
         result2 = requests.get(urlv+serviceKey+typeOfSearch_v+method+part+"&q="+word2+sort, verify=False)
         soup = BeautifulSoup(result2.text,'lxml-xml')
         items2 = soup.find_all("item")
+        items3 = soup.find_all("rel_info")
 
+        parse2_result = {}
         for item in items2:
-            example_result.append(parse2())
+            parse2_result = parse2()
+            example_result.append(parse2_result)
+        for item in items3:
+            parse3_result = parse3(parse2_result['용례'])
+            if parse3_result != 0:
+                similar_result.append(parse3_result)
+
+
+ #새로 추가된 부분
+    #유의어 가져오기
             
-    return parsing_result, example_result
+    return parsing_result, example_result, similar_result
             
 # st = parsing_result
 # 뜻
@@ -110,3 +134,9 @@ def EXAMPLE_test(st, targetword): #5.01 수정
         string = item[:val] + "____" + item[val+len(targetword):]
         example.append(string)
     return example
+
+def SIMILAR(st):
+    s_word = []
+    for item in st:
+        s_word.append(str(item)[24:])
+    return s_word

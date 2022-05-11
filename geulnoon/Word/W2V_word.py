@@ -6,20 +6,19 @@ import random
 
 def W2V(word):
 
-    ko_model = Word2Vec.load("././ko/ko.bin")#디렉토리 수정
+    ko_model = Word2Vec.load("././ko/ko_new.bin")#디렉토리 수정
     example = ko_model.wv.most_similar(word)
+    print(example)
     
     word_list = []
-    for i in range(len(example)):
-        if len(example[i][0]) > 1 :
-            word_list.append(example[i][0])
+    try:
+        for i in range(3, len(example)):
+            if len(example[i][0]) > 1 :
+                word_list.append(example[i][0])
+    except:
+        word_list = example
     
     w2v_word = []
-    for i in range(4):
-        if i not in w2v_word : 
-            w2v_word.append(random.choice(word_list))
-    
-        
+    w2v_word = random.sample(word_list,  4)
+
     return w2v_word
-
-

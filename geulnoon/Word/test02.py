@@ -23,37 +23,41 @@ def t02(word, temp):
         for x in range(len(remove)):
             row1 = row.replace(remove[x],"")
         row2 = row1.replace("'","")
-        row3 = row2.split('.')
+        row3 = row2.replace(",","")
+        row4 = row3.split('.')
         strip_li = []
-        for i in row3:
+        for i in row4:
             i = i.strip()
-            strip_li.append(i)
+            if i:
+                strip_li.append(i)
             
         return strip_li
 
     # 출제 어휘가 있는 문장과 문장 전후 추출
-    def Sentence(st):
+    def Sentence(temp):
         sentence_list = []
-        for i in range(len(st)):
-            if word in st[i]:
-                if(len(sentence_list) > 3):
-                    break
-                sentence_list.append(st[i-1])
-                sentence_list.append(st[i])
-                sentence_list.append(st[i+1])
+        for i in range(len(temp)):
+            if word in temp[i]:
+                if i==0:
+                    sentence_list.append(temp[i])
+                    sentence_list.append(temp[i+1])
+                elif i==len(temp)-1:
+                    sentence_list.append(temp[i-1])
+                    sentence_list.append(temp[i])
+                else:
+                    sentence_list.append(temp[i-1])
+                    sentence_list.append(temp[i])
+                    sentence_list.append(temp[i+1])
+                    if len(sentence_list) > 3:
+                        break    
         return sentence_list  
-        
+
     # 뜻
     mean = REMOVE(ex_mean)
     # 용례
     example = REMOVE(ex_example)
-    #5.03 추가 보기 문제 해결("또는"이 있을 때 문장이 두개로 나누어짐)
-    for i in mean:
-      if "또는" in i:
-        mean.remove(i)
     # 문장
-    txt = REMOVE(temp)
-    sentence = Sentence(txt)
+    sentence = Sentence(temp)
 
 
     choice = { name:value for name, value in zip(mean, example) }

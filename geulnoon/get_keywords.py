@@ -201,7 +201,7 @@ def getKeywords (text):
     words = [] #키워드 배열 목록
     for k in kw.keys():
         for i in k:
-            if i[0] in text:
+            if i[0] in text and len(i[0]) > 1:
                 words.append(i[0])
     return words
 

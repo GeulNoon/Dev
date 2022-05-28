@@ -6,10 +6,10 @@
 ![main](https://user-images.githubusercontent.com/68368589/170729871-0cbe4874-fe08-4abf-aaac-038949800201.png)
 
 ## :file_folder: 레파지토리 소개
-* Frontend - 웹사이트 프론트 <p><img src="https://img.shields.io/badge/React-61DAFB? style=flat&logo=React&logoColor=white"/><p>
-* Bacekend - 웹사이트 서버 
-  * 데이터베이스 : Amazon RDS를 이용한 mySQL<p><img src="https://img.shields.io/badge/Django-092E20? style=flat&logo=Django&logoColor=white"/> <img src="https://img.shields.io/badge/Amazon-FF9900? style=flat&logo=Amazon&logoColor=white"/><p>
-* Dev - 개발에 필요한 알고리즘 구현 & 데이터셋 생성 <p><img src="https://img.shields.io/badge/Python-3776AB? style=flat&logo=Python&logoColor=white"/> <img src="https://img.shields.io/badge/Colab-F9AB00? style=flat&logo=Goole Colab&logoColor=white"/> <img src="https://img.shields.io/badge/Numpy-013243? style=flat&logo=Numpy&logoColor=white"/> <img src="https://img.shields.io/badge/Jupyter-F37626? style=flat&logo=Jupyter&logoColor=white"/><p>
+* Frontend - 웹사이트 프론트 <img src="https://img.shields.io/badge/React-61DAFB? style=flat&logo=React&logoColor=white"/><p>
+* Bacekend - 웹사이트 서버 <img src="https://img.shields.io/badge/Django-092E20? style=flat&logo=Django&logoColor=white"/> <img src="https://img.shields.io/badge/Amazon-FF9900? style=flat&logo=Amazon&logoColor=white"/>
+ * 데이터베이스 : Amazon RDS를 이용한 mySQL<p>
+* Dev - 개발에 필요한 알고리즘 구현 & 데이터셋 생성 <img src="https://img.shields.io/badge/Python-3776AB? style=flat&logo=Python&logoColor=white"/> <img src="https://img.shields.io/badge/Colab-F9AB00? style=flat&logo=Goole Colab&logoColor=white"/> <img src="https://img.shields.io/badge/Numpy-013243? style=flat&logo=Numpy&logoColor=white"/> <img src="https://img.shields.io/badge/Jupyter-F37626? style=flat&logo=Jupyter&logoColor=white"/><p>
 
 ## :mag_right: 사용방법
 1. 학습하기

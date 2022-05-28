@@ -8,7 +8,7 @@
 ## :file_folder: 레파지토리 소개
 Frontend - 글눈 프론트 <img src="https://img.shields.io/badge/React-61DAFB? style=flat&logo=React&logoColor=white"/><p>
 Bacekend - 글눈 서버 <img src="https://img.shields.io/badge/Django-092E20? style=flat&logo=Django&logoColor=white"/><p>
-Dev - 전체적인 개발 코드 <img src="https://img.shields.io/badge/Python-3776AB? style=flat&logo=Python&logoColor=white"/><p>
+Dev - 전체적인 개발 코드 <img src="https://img.shields.io/badge/Python-3776AB? style=flat&logo=Python&logoColor=white"/> <img src="https://img.shields.io/badge/Colab-F9AB00? style=flat&logo=Goole Colab&logoColor=white"/><p>
 
 ## :mag_right: 사용방법
 1. 학습하기

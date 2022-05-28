@@ -7,7 +7,7 @@
 
 ## :file_folder: 레파지토리 소개
 * Frontend <img src="https://img.shields.io/badge/React-61DAFB? style=flat&logo=React&logoColor=white"/><p>
-* Bacekend <img src="https://img.shields.io/badge/Django-092E20? style=flat&logo=Django&logoColor=white"/><p>
+* Bacekend <img src="https://img.shields.io/badge/Django-092E20? style=flat&logo=Django&logoColor=white"/> <img src="https://img.shields.io/badge/Amazon-FF9900? style=flat&logo=Amazon&logoColor=white"/><p>
 * Dev <img src="https://img.shields.io/badge/Python-3776AB? style=flat&logo=Python&logoColor=white"/> <img src="https://img.shields.io/badge/Colab-F9AB00? style=flat&logo=Goole Colab&logoColor=white"/> <img src="https://img.shields.io/badge/Numpy-013243? style=flat&logo=Numpy&logoColor=white"/> <img src="https://img.shields.io/badge/Jupyter-F37626? style=flat&logo=Jupyter&logoColor=white"/><p>
 
 ## :mag_right: 사용방법

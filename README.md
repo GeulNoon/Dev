@@ -6,8 +6,8 @@
 ![main](https://user-images.githubusercontent.com/68368589/170729871-0cbe4874-fe08-4abf-aaac-038949800201.png)
 
 ## :file_folder: 레파지토리 소개
-Frontend - 글눈 프론트(리액트)  
-Bacekend - 글눈 서버(장고)  
+Frontend - 글눈 프론트  <img src="https://img.shields.io/badge/React-61DAFB?style=flat&logo=TypeScript&logoColor=white"/>
+Bacekend - 글눈 서버   
 Dev - 전체적인 개발 코드  
 
 ## :mag_right: 사용방법

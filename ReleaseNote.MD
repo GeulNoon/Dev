@@ -7,6 +7,6 @@ https://geulnoon.github.io/Frontend/
 
 ## :book: 진행 가이드
 ### 테스트 계정 정보
-**ID:**test3@naver.com
-**PW:**test1234
+**ID:** test3@naver.com 
+**PW:** test1234
 
